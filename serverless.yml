@@ -1,0 +1,83 @@
+# Serverless definition file
+# --------------------------
+# Defines Lambda functions to be deployed to AWS using the Serverless Framework.
+# http://serverless.com
+
+service: lambda-house
+
+# frameworkVersion: ">=1.1.0 <2.0.0"
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  region: us-east-1
+  stage: dev
+  memorySize: 128
+  timeout: 30
+  environment:
+    ROOM_TABLE: room-${opt:stage, self:provider.stage}
+    ROOM_MEMBERS_TABLE: "room-members-${opt:stage, self:provider.stage}"
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/room-*"
+
+functions:
+  listRooms:
+    handler: api/rooms.list
+    memorySize: 128
+    description: List all rooms
+    events:
+      - http: 
+          path: rooms
+          method: get
+          cors: true     
+  roomDetails:
+    handler: api/rooms.get
+    events:
+      - http:
+          path: rooms/{id}
+          method: get
+          cors: true    
+         
+
+resources:
+  Resources:
+    CandidatesDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: "id"
+            AttributeType: "S"   
+        KeySchema:
+          -
+            AttributeName: "id"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        StreamSpecification:
+          StreamViewType: "NEW_IMAGE"
+        TableName: ${self:provider.environment.ROOM_TABLE}
+    CandidateEmailDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: "member_id"
+            AttributeType: "S"
+        KeySchema:
+          -
+            AttributeName: "member_id"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        TableName: ${self:provider.environment.ROOM_MEMBERS_TABLE}
