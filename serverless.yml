@@ -14,9 +14,10 @@ provider:
   stage: dev
   memorySize: 128
   timeout: 30
+
   environment:
-    ROOM_TABLE: room-${opt:stage, self:provider.stage}
-    ROOM_MEMBERS_TABLE: "room-members-${opt:stage, self:provider.stage}"
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+    DYNAMODB_IP_TABLE: ${self:service}-ip
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -24,60 +25,77 @@ provider:
         - dynamodb:Scan
         - dynamodb:GetItem
         - dynamodb:PutItem
-      Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/room-*"
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_IP_TABLE}"
 
 functions:
-  listRooms:
-    handler: api/rooms.list
-    memorySize: 128
-    description: List all rooms
+  create:
+    handler: rooms/create.create
     events:
-      - http: 
+      - http:
+          path: rooms
+          method: post
+          cors: true
+
+  list:
+    handler: rooms/list.list
+    events:
+      - http:
           path: rooms
           method: get
-          cors: true     
-  roomDetails:
-    handler: api/rooms.get
+          cors: true
+
+  get:
+    handler: rooms/get.get
     events:
       - http:
           path: rooms/{id}
           method: get
-          cors: true    
+          cors: true
+
+  update:
+    handler: rooms/update.update
+    events:
+      - http:
+          path: rooms/{id}
+          method: put
+          cors: true
+
+  delete:
+    handler: rooms/delete.delete
+    events:
+      - http:
+          path: rooms/{id}
+          method: delete
+          cors: true
          
 
 resources:
   Resources:
-    CandidatesDynamoDbTable:
+    TodosDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain
       Properties:
         AttributeDefinitions:
           -
-            AttributeName: "id"
-            AttributeType: "S"   
+            AttributeName: id
+            AttributeType: S
         KeySchema:
           -
-            AttributeName: "id"
-            KeyType: "HASH"
+            AttributeName: id
+            KeyType: HASH
         ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
-        StreamSpecification:
-          StreamViewType: "NEW_IMAGE"
-        TableName: ${self:provider.environment.ROOM_TABLE}
-    CandidateEmailDynamoDbTable:
-      Type: 'AWS::DynamoDB::Table'
-      DeletionPolicy: Retain
-      Properties:
-        AttributeDefinitions:
-          -
-            AttributeName: "member_id"
-            AttributeType: "S"
-        KeySchema:
-          -
-            AttributeName: "member_id"
-            KeyType: "HASH"
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
-        TableName: ${self:provider.environment.ROOM_MEMBERS_TABLE}
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
