@@ -9,7 +9,9 @@
     "envelope": "^1.0.7",
     "node-pop3": "^0.1.0",
     "nodemailer": "^4.0.1",
+    "public-ip": "^2.3.5",
     "ramda": "^0.24.1",
+    "serverless-dynamodb-local": "^0.2.25",
     "uuid": "^3.1.0"
   },
   "devDependencies": {},

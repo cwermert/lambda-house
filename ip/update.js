@@ -1,28 +1,24 @@
 'use strict';
-
-const uuid = require('uuid');
 const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
-
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
+const uuid = require("uuid");
 
-module.exports.create = (event, context, callback) => {
+module.exports.update = (event, context, callback) => {
   const timestamp = new Date().getTime();
 
   const data = JSON.parse(event.body);
-  if (typeof data.name !== 'string' || typeof data.floor !== 'number') {
+  if (typeof data.address !== 'string') {
     console.error('Validation Failed');
-    callback(new Error('Couldn\'t create the room.'));
+    callback(new Error('Couldn\'t update IP.'));
     return;
   }
 
   const params = {
-    TableName: process.env.DYNAMODB_TABLE,
+    TableName: process.env.DYNAMODB_IP_TABLE,
     Item: {
       id: uuid.v1(),
-      name: data.name,
-      floor: data.floor,
-      createdAt: timestamp,
-      updatedAt: timestamp,
+      created_at: timestamp,
+      address: data.address
     },
   };
 
@@ -31,7 +27,7 @@ module.exports.create = (event, context, callback) => {
     // handle potential errors
     if (error) {
       console.error(error);
-      callback(new Error('Couldn\'t create the room.'));
+      callback(new Error('Couldn\'t update IP.'));
       return;
     }
 

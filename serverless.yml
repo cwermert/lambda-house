@@ -40,7 +40,7 @@ provider:
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_IP_TABLE}"
 
 functions:
-  create:
+  roomCreate:
     handler: rooms/create.create
     events:
       - http:
@@ -48,7 +48,7 @@ functions:
           method: post
           cors: true
 
-  list:
+  roomList:
     handler: rooms/list.list
     events:
       - http:
@@ -56,7 +56,7 @@ functions:
           method: get
           cors: true
 
-  get:
+  roomGet:
     handler: rooms/get.get
     events:
       - http:
@@ -64,7 +64,7 @@ functions:
           method: get
           cors: true
 
-  update:
+  roomUpdate:
     handler: rooms/update.update
     events:
       - http:
@@ -72,18 +72,25 @@ functions:
           method: put
           cors: true
 
-  delete:
+  roomDelete:
     handler: rooms/delete.delete
     events:
       - http:
           path: rooms/{id}
           method: delete
           cors: true
-         
 
+  ipUpdate:
+    handler: ip/update.update
+    events:
+      - http:
+          path: ip/update
+          method: put
+          cors: true
+           
 resources:
   Resources:
-    TodosDynamoDbTable:
+    RoomsDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain
       Properties:
@@ -99,3 +106,23 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: ${self:provider.environment.DYNAMODB_TABLE}
+
+    IPDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.DYNAMODB_IP_TABLE}
+
+plugins:
+  - serverless-dynamodb-local
