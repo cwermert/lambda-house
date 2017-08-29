@@ -1,21 +1,15 @@
 'use strict';
-const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
-AWS.config.update({ region: 'us-east-1' });
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
-const uuid = require("uuid");
 
-module.exports.update = (event, context, callback) => {
+module.exports.get = (event, context, callback) => {
   const timestamp = new Date().getTime();
 
-  console.log(typeof event.body);
-
-  const data = (typeof event.body === "string") ? JSON.parse(event.body) : event.body;
-
+  // const data = JSON.parse(event.body);
+  // 
+  const data = event.body;
   if (typeof data.address !== 'string') {
     console.error('Validation Failed');
-    console.log(data);
     callback(new Error('Couldn\'t update IP.'));
-    return new Error('Couldn\'t update IP.');
+    return;
   }
 
   const params = {

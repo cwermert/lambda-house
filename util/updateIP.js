@@ -1,13 +1,16 @@
 'use strict';
-
+const publicIP = require("public-ip");
 const uuid = require('uuid');
 const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 class IP {
+
   constructor(db) {
     this.db = db;
+    this.save = this.save.bind(this);
+    this.get = this.get.bind(this);
   }
 
   save(address, callback) {
@@ -24,6 +27,18 @@ class IP {
         callback();
       }
     });
+  }
+
+  get() {
+    return publicIP.v4()
+      .then(ip => {
+        console.log(ip);
+        return ip;
+      })
+      .catch(err => {
+        console.log(err);
+        return err;
+      })
   }
 }
 
